@@ -286,7 +286,7 @@ class probWindow(QMainWindow):
 
         cursor = self.conn.cursor()
         cursor.execute(f"WITH booked_tickets AS (\
-        SELECT ti.name_of_types, COUNT(bt.id_buyng_ticket) AS booked_seats \
+        SELECT ti.name_of_types, COUNT(bt.id_by_a_ticket) AS booked_seats \
         FROM ticket ti \
         JOIN flight_promotions fp ON ti.id_flight_promotions = fp.id_flight_promotions \
         JOIN flight_records fr ON fp.id_flight_records = fr.id_flight_records \
