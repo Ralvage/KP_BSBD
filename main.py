@@ -46,8 +46,8 @@ def aut_user (conn, username):
     return role
 
 class LoginWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -61,23 +61,23 @@ class LoginWindow(QMainWindow):
         conn = connect_bd(username, password)
         role = aut_user(conn, username)
         if role == 'consultant':
-            self.act_win = cWindow(username, conn)
+            self.act_win = cWindow(username, conn, self)
             self.act_win.show()
-            self.close()
+            self.hide()
         elif role == 'manager':
-            self.act_win = mWindow(username, conn)
+            self.act_win = mWindow(username, conn, self)
             self.act_win.show()
-            self.close()
+            self.hide()
         elif role == 'sysadmin':
-            self.act_win = sWindow(username, conn)
+            self.act_win = sWindow(username, conn, self)
             self.act_win.show()
-            self.close()
+            self.hide()
         else:
             QMessageBox.warning(self, 'Error', 'Invalid role')
 
 class cWindow(QMainWindow):
-    def __init__(self, username, conn):
-        super().__init__()
+    def __init__(self, username, conn, parent=None):
+        super().__init__(parent)
         self.cui = cUi_MainWindow()
         self.cui.setupUi(self)
         self.conn = conn
@@ -246,12 +246,12 @@ class cWindow(QMainWindow):
 
     def prob(self):
         self.txt = self.cui.comboBox_3.currentText()
-        self.act_win = probWindow(self.txt, self.conn)
+        self.act_win = probWindow(self.txt, self.conn, self)
         self.act_win.show()
 
     def reg(self):
         self.txt = self.cui.comboBox_3.currentText()
-        self.act_win = regWindow(self.conn)
+        self.act_win = regWindow(self.conn, self)
         self.act_win.show()
 
     def top(self):
@@ -275,9 +275,16 @@ class cWindow(QMainWindow):
                 item = QTableWidgetItem(str(value))
                 self.cui.tableWidget.setItem(i, j, item)
 
+    def closeEvent(self, event):
+        try:
+            self.parent().show()
+            event.accept()
+        except Exception as e:
+            QMessageBox.critical(None, 'Error', str(e))
+
 class probWindow(QMainWindow):
-    def __init__(self, txt, conn):
-        super().__init__()
+    def __init__(self, txt, conn, parent=None):
+        super().__init__(parent)
         self.pui = prob_MainWindow()
         self.pui.setupUi(self)
 
@@ -337,8 +344,8 @@ class probWindow(QMainWindow):
         self.pui.label_16.setText(f"Город прибытия: {rows[3]}")
 
 class regWindow(QMainWindow):
-    def __init__(self, conn):
-        super().__init__()
+    def __init__(self, conn, parent=None):
+        super().__init__(parent)
         self.rui = regUi_MainWindow()
         self.rui.setupUi(self)
 
@@ -417,17 +424,17 @@ class regWindow(QMainWindow):
         self.rui.label_4.setText(f'Итоговая цена: {total_price}')
 
     def pass_reg(self):
-        self.act_win = passregWindow(self.conn)
+        self.act_win = passregWindow(self.conn, self)
         self.act_win.show()
 
     def upt(self):
         self.close()
-        self.act_win = regWindow(self.conn)
+        self.act_win = regWindow(self.conn, self)
         self.show()
 
 class passregWindow(QMainWindow):
-    def __init__(self, conn):
-        super().__init__()
+    def __init__(self, conn, parent=None):
+        super().__init__(parent)
         self.prui = passUi_MainWindow()
         self.prui.setupUi(self)
 
@@ -452,8 +459,8 @@ class passregWindow(QMainWindow):
         self.close()
 
 class mWindow(QMainWindow):
-    def __init__(self, username, conn):
-        super().__init__()
+    def __init__(self, username, conn, parent=None):
+        super().__init__(parent)
         self.mui = mUi_MainWindow()
         self.mui.setupUi(self)
         self.conn = conn
@@ -584,22 +591,29 @@ class mWindow(QMainWindow):
 
     def update_t(self):
         self.tablename = self.table_name
-        self.act_win = updateWindow(self.tablename, self.conn, self.column_names, self.count_1)
+        self.act_win = updateWindow(self.tablename, self.conn, self.column_names, self.count_1, self)
         self.act_win.show()
 
     def delete_t(self):
         self.tablename = self.table_name
-        self.act_win = deleteWindow(self.tablename, self.conn, self.column_names, self.count_1)
+        self.act_win = deleteWindow(self.tablename, self.conn, self.column_names, self.count_1, self)
         self.act_win.show()
 
     def insert_t(self):
         self.tablename = self.table_name
-        self.act_win = insertWindow(self.tablename, self.conn, self.column_names, self.count_1)
+        self.act_win = insertWindow(self.tablename, self.conn, self.column_names, self.count_1, self)
         self.act_win.show()
 
+    def closeEvent(self, event):
+        try:
+            self.parent().show()
+            event.accept()
+        except Exception as e:
+            QMessageBox.critical(None, 'Error', str(e))
+
 class sWindow(QMainWindow):
-    def __init__(self, username, conn):
-        super().__init__()
+    def __init__(self, username, conn, parent=None):
+        super().__init__(parent)
         self.sui = sUi_MainWindow()
         self.sui.setupUi(self)
         self.conn = conn
@@ -772,27 +786,34 @@ class sWindow(QMainWindow):
 
     def prob(self):
         self.txt = self.sui.comboBox_5.currentText()
-        self.act_win = probWindow(self.txt, self.conn)
+        self.act_win = probWindow(self.txt, self.conn, self)
         self.act_win.show()
 
     def update_t(self):
         self.tablename = self.table_name
-        self.act_win = updateWindow(self.tablename, self.conn, self.column_names, self.count_1)
+        self.act_win = updateWindow(self.tablename, self.conn, self.column_names, self.count_1, self)
         self.act_win.show()
 
     def delete_t(self):
         self.tablename = self.table_name
-        self.act_win = deleteWindow(self.tablename, self.conn, self.column_names, self.count_1)
+        self.act_win = deleteWindow(self.tablename, self.conn, self.column_names, self.count_1, self)
         self.act_win.show()
 
     def insert_t(self):
         self.tablename = self.table_name
-        self.act_win = insertWindow(self.tablename, self.conn, self.column_names, self.count_1)
+        self.act_win = insertWindow(self.tablename, self.conn, self.column_names, self.count_1, self)
         self.act_win.show()
 
+    def closeEvent(self, event):
+        try:
+            self.parent().show()
+            event.accept()
+        except Exception as e:
+            QMessageBox.critical(None, 'Error', str(e))
+
 class updateWindow(QMainWindow):
-    def __init__(self, tablename, conn, column_names, count_1):
-        super().__init__()
+    def __init__(self, tablename, conn, column_names, count_1, parent=None):
+        super().__init__(parent)
         self.upui = Updatei_MainWindow()
         self.upui.setupUi(self)
         self.conn = conn
@@ -816,8 +837,8 @@ class updateWindow(QMainWindow):
         self.close()
 
 class deleteWindow(QMainWindow):
-    def __init__(self, tablename, conn, column_names, count_1):
-        super().__init__()
+    def __init__(self, tablename, conn, column_names, count_1, parent=None):
+        super().__init__(parent)
         self.delui = delUi_MainWindow()
         self.delui.setupUi(self)
         self.conn = conn
@@ -839,8 +860,8 @@ class deleteWindow(QMainWindow):
         self.close()
 
 class insertWindow(QMainWindow):
-    def __init__(self, tablename, conn, column_names, count_1):
-        super().__init__()
+    def __init__(self, tablename, conn, column_names, count_1, parent=None):
+        super().__init__(parent)
         self.inui = insUi_MainWindow()
         self.inui.setupUi(self)
         self.conn = conn
