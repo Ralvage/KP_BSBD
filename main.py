@@ -16,35 +16,6 @@ from insert import insUi_MainWindow
 import psycopg2
 import subprocess
 
-def connect_bd (username, password):
-    try:
-        conn = psycopg2.connect(
-            dbname='postgres',
-            user=username,
-            password=password,
-            host='localhost'
-        )
-
-        return conn
-    except psycopg2.Error:
-        print(f"Error database connection")
-
-def aut_user (conn, username):
-    values = ('consultant',
-              'manager',
-              'sysadmin')
-
-    cursor = conn.cursor()
-    for value in values:
-        cursor.execute(
-            f"SELECT rolname FROM pg_roles WHERE pg_has_role(rolname, '{value}', 'member') and rolname = '{username}';")
-        result = cursor.fetchone()
-        if result is not None:
-            role = value
-            break
-    cursor.close()
-    return role
-
 class LoginWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -53,27 +24,62 @@ class LoginWindow(QMainWindow):
 
         self.ui.pushButton.clicked.connect(self.login)
 
+    def connect_bd(self, username, password):
+        try:
+            conn = psycopg2.connect(
+                dbname='postgres',
+                user=username,
+                password=password,
+                host='localhost'
+            )
+
+            return conn
+        except psycopg2.Error:
+            QMessageBox.warning(self, 'Error', 'Не удалось подключится к БД')
+            return None
+
+    def aut_user(self, conn, username):
+        if conn is None:
+            return None
+
+        values = ('consultant',
+                  'manager',
+                  'sysadmin')
+
+        cursor = conn.cursor()
+        for value in values:
+            cursor.execute(
+                f"SELECT rolname FROM pg_roles WHERE pg_has_role(rolname, '{value}', 'member') and rolname = '{username}';")
+            result = cursor.fetchone()
+            if result is not None:
+                role = value
+                break
+        cursor.close()
+        return role
 
     def login(self):
         username = self.ui.lineEdit.text()
         password = self.ui.lineEdit_2.text()
 
-        conn = connect_bd(username, password)
-        role = aut_user(conn, username)
-        if role == 'consultant':
-            self.act_win = cWindow(username, conn, self)
-            self.act_win.show()
-            self.hide()
-        elif role == 'manager':
-            self.act_win = mWindow(username, conn, self)
-            self.act_win.show()
-            self.hide()
-        elif role == 'sysadmin':
-            self.act_win = sWindow(username, conn, self)
-            self.act_win.show()
-            self.hide()
+        conn = self.connect_bd(username, password)
+        role = self.aut_user(conn, username)
+        if conn is not None:
+            if role == 'consultant':
+                self.act_win = cWindow(username, conn, self)
+                self.act_win.show()
+                self.hide()
+            elif role == 'manager':
+                self.act_win = mWindow(username, conn, self)
+                self.act_win.show()
+                self.hide()
+            elif role == 'sysadmin':
+                self.act_win = sWindow(username, conn, self)
+                self.act_win.show()
+                self.hide()
+            else:
+                QMessageBox.warning(self, 'Error', 'Invalid role')
         else:
-            QMessageBox.warning(self, 'Error', 'Invalid role')
+            QMessageBox.warning(self, 'Error', 'Неверный логин или пароль')
 
 class cWindow(QMainWindow):
     def __init__(self, username, conn, parent=None):
